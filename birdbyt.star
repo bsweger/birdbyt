@@ -2,6 +2,7 @@
 
 load('http.star', 'http')
 load('humanize.star', 'humanize')
+load('random.star', 'random')
 load('render.star', 'render')
 load("secret.star", "secret")
 load('time.star', 'time')
@@ -21,7 +22,7 @@ def get_params(config):
     params = {}
     params['dist'] = config.get('distance') or '5'
     params['back'] = config.get('back') or '6'
-    params['maxResults'] = '2'
+    params['maxResults'] = '100'
 
     # Default the location to Easthampton, MA
     params['lat'] = config.get('lat') or '42.266757'
@@ -49,13 +50,17 @@ def get_sighting(response):
         sighting['bird'] = 'Error retrieving birds'
         return sighting
 
+    number_of_sightings = len(response.json())
+
     # request succeeded, but no data was returned
-    if len(response.json()) == 0:
+    if number_of_sightings == 0:
         sighting['bird'] = ['No recent sightings']
         return sighting
     
-    # grab the first (aka most recent) bird sighting from the e-bird response data
-    data = response.json()[0]
+    # grab a random bird sighting from ebird response
+    random_sighting = random.number(0, number_of_sightings - 1)
+    data = response.json()[random_sighting]
+
     sighting['bird'] = data.get('comName')
     sighting['loc'] = data.get('locName') or 'Location unknown'
     # TODO: handle date parse errors
