@@ -116,7 +116,6 @@ def format_bird_name(bird):
 
     # Hard-code some formatting until I feel like futzing with
     # the layout more
-    bird = bird.replace('Shouldered', 'Shoul-dered')
     bird = bird.replace('Hummingbird', 'Humming-bird')
     bird = bird.replace('catcher', '-catcher')
     bird = bird.replace('pecker', '-pecker')
