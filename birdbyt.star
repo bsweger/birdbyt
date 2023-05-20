@@ -1,6 +1,7 @@
 """Birdbyt"""
 
 load('cache.star', 'cache')
+load("encoding/base64.star", "base64")
 load('encoding/json.star', 'json')
 load('http.star', 'http')
 load('humanize.star', 'humanize')
@@ -12,6 +13,10 @@ load('time.star', 'time')
 EBIRD_API_KEY = "AV6+xWcEv/YjkWNTF/Gyjx/ueAW476JLIwmwOHXQi8pNzE5Arbce6/bflzA0i0BIl/ocq1y/nNUFR/3lCZwUFmsbJ5s+R8YLlNNMmF1PNCi5IKgBaVDF8lUW+YFT7nUBkLXzt7JrorOsDGXBHejPq1tz"
 EBIRD_URL = 'https://api.ebird.org/v2'
 MAX_API_RESULTS = "100"
+
+BIRD_ICON = base64.decode("""
+iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABOElEQVQ4T6VSPU8CMRh+uhBEHEgMGhCGczl3SdhcNXF2cnPG2d8Bi79BFzdnFkKCO7foAhovITEmBxwM1j4lvdxhDy7xTdqk7fP1vqnAP0tk5bunHbnCSngvtxEvk4Db6Mhy1YEGq80fv8IbrES2CriNtiIfo17dxegjQPfpEs3zB3xPfAwHLbFRgLHLNQf1ShGj9wCLxRT95ys0Lx61c+/uenMCRj84clCr0H2KZTiLRvY1+cTwppUusI3sqfipM1gnE2jc6WzIfwRI5GU8Ns/++A2l/UPMZwFCtawCJBOUyxcSXyNO5oNVwJANkyIksoyzjaxbIDlfKGJHLVvRUarGwnkyusEqgbYS2NNnghPFiahZc9z8NDaDKMF6bwT/3EOKkxzE2TL1w+kHthGfrHHKLGBtPuPlL42CnW2DwIuFAAAAAElFTkSuQmCC
+""")
 
 def get_params(config):
     """Get params for e-birds request.
@@ -106,6 +111,30 @@ def get_sighting_day(sighting_date):
 
     return sighting_day
 
+def format_bird_name(bird):
+    """Format bird name for display."""
+
+    # Hard-code some formatting until I feel like futzing with
+    # the layout more
+    bird = bird.replace('Shouldered', 'Shoul-dered')
+    bird = bird.replace('Hummingbird', 'Humming-bird')
+    bird = bird.replace('catcher', '-catcher')
+    bird = bird.replace('pecker', '-pecker')
+
+    # Wrapped text widget doesn't break on a hyphen, so force a newline
+    # (many birds have hyphenated names, as it turns out)
+    bird = bird.replace('-', '-\n')
+    return bird
+
+
+def get_scroll_text(sighting):
+    """Return a text string to scroll in the bottom marquee."""
+
+    day = get_sighting_day(sighting['date'])
+    scroll_text = day + ': ' + sighting['loc']
+    
+    return scroll_text
+ 
 
 def main(config):
     """Update config.
@@ -119,21 +148,49 @@ def main(config):
     params = get_params(config)
     response = get_recent_birds(params, ebird_key)
     sighting = format_sighting(response)
-    sighting_day = get_sighting_day(sighting['date'])
-    
+
     return render.Root(
         render.Column(
             children=[
-                render.Marquee(
-                    width=64,
-                    child=render.Text(
-                        sighting.get('bird'),
-                        color='ff8241'
-                    ),
+                render.Row(
+                    children=[
+                        render.Box(
+                            width=18,
+                            height=25,
+                            child=render.Image(src=BIRD_ICON)),
+                        render.Box(
+                            height=25,
+                            padding=1,
+                            child=render.Marquee(
+                                scroll_direction='vertical',
+                                align='center',
+                                height=25,
+                                child=render.WrappedText(
+                                    align='left',
+                                    content=format_bird_name(sighting.get('bird'))
+                                )
+                            )
+                        )
+                    ]
                 ),
-                render.Text(sighting_day),
-                render.WrappedText(sighting.get('loc'))
+                render.Row(
+                    expanded=True,
+                    cross_align='end',
+                    children=[
+                        render.Box(
+                            color='043927',
+                            child=render.Marquee(
+                                width=64,
+                                child=render.Text(
+                                    offset=-1,
+                                    color='fefbbd',
+                                    font='tom-thumb',
+                                    content=get_scroll_text(sighting)
+                                )
+                            )
+                        )
+                    ]
+                )
             ]
         )
-)
-
+    )
