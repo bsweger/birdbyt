@@ -63,8 +63,7 @@ def get_sighting(response):
 
     sighting['bird'] = data.get('comName')
     sighting['loc'] = data.get('locName') or 'Location unknown'
-    # TODO: handle date parse errors
-    sighting['date'] = time.parse_time(data.get('obsDt'), format='2006-01-02 03:04')
+    sighting['date'] = time.parse_time(data.get('obsDt'), format='2006-01-02 15:04')
     
     return sighting
 
