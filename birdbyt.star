@@ -7,6 +7,7 @@ load('http.star', 'http')
 load('humanize.star', 'humanize')
 load('random.star', 'random')
 load('render.star', 'render')
+load('schema.star', 'schema')
 load("secret.star", "secret")
 load('time.star', 'time')
 
@@ -203,4 +204,48 @@ def main(config):
                 )
             ]
         )
+    )
+
+
+def get_schema():
+    """Return the schema needed for Tidybyt community app installs."""
+
+    list_back = ["1", "2", "3", "4", "5", "6"]
+    options_back = [
+        schema.Option(display = item, value = item)
+        for item in list_back
+    ]
+
+    list_distance = ["1", "2", "5", "10", "25"]
+    options_distance = [
+        schema.Option(display = item, value = item)
+        for item in list_distance
+    ]
+
+    return schema.Schema(
+        version = "1",
+        fields = [
+            schema.Location(
+                id = "location",
+                name = "Location",
+                desc = "Location to search for bird sightings.",
+                icon = "locationDot",
+            ),
+            schema.Dropdown(
+                id = "distance",
+                name = "Distance",
+                desc = "Search radius from location (km)",
+                icon = "dove",
+                default = DEFAULT_DISTANCE,
+                options = options_distance
+            ),
+            schema.Dropdown(
+                id = "back",
+                name = "Back",
+                desc = "Number of days back to fetch bird sightings.",
+                icon = "calendarDays",
+                default = DEFAULT_BACK,
+                options = options_back
+            )
+        ],
     )
