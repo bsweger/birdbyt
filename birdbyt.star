@@ -7,6 +7,7 @@ load('http.star', 'http')
 load('humanize.star', 'humanize')
 load('random.star', 'random')
 load('render.star', 'render')
+load('schema.star', 'schema')
 load("secret.star", "secret")
 load('time.star', 'time')
 
@@ -18,6 +19,19 @@ BIRD_ICON = base64.decode("""
 iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABOElEQVQ4T6VSPU8CMRh+uhBEHEgMGhCGczl3SdhcNXF2cnPG2d8Bi79BFzdnFkKCO7foAhovITEmBxwM1j4lvdxhDy7xTdqk7fP1vqnAP0tk5bunHbnCSngvtxEvk4Db6Mhy1YEGq80fv8IbrES2CriNtiIfo17dxegjQPfpEs3zB3xPfAwHLbFRgLHLNQf1ShGj9wCLxRT95ys0Lx61c+/uenMCRj84clCr0H2KZTiLRvY1+cTwppUusI3sqfipM1gnE2jc6WzIfwRI5GU8Ns/++A2l/UPMZwFCtawCJBOUyxcSXyNO5oNVwJANkyIksoyzjaxbIDlfKGJHLVvRUarGwnkyusEqgbYS2NNnghPFiahZc9z8NDaDKMF6bwT/3EOKkxzE2TL1w+kHthGfrHHKLGBtPuPlL42CnW2DwIuFAAAAAElFTkSuQmCC
 """)
 
+# Config defaults
+DEFAULT_LOCATION = {
+    'lat': '42.27',
+    'lng': '-72.67',
+    'description': 'Easthampton, MA, USA',
+    'locality':  'Easthampton',
+    'place_id': 'ChIJZyTslVXY5okRqOO1o8XjhA0',
+    'timezone': 'America/New_York"'
+
+}
+DEFAULT_DISTANCE = "5"
+DEFAULT_BACK = "2"
+
 def get_params(config):
     """Get params for e-birds request.
     
@@ -28,13 +42,17 @@ def get_params(config):
     """
 
     params = {}
-    params['dist'] = config.get('distance') or '5'
-    params['back'] = config.get('back') or '6'
-    params['maxResults'] = MAX_API_RESULTS
 
-    # Default the location to Easthampton, MA
-    params['lat'] = config.get('lat') or '42.266757'
-    params['lng'] = config.get('long') or '-72.66898'
+    location = config.get('location')
+    loc = json.decode(location) if location else DEFAULT_LOCATION
+    
+    # Make incoming lat/long slightly less granular
+    params['lat'] = loc['lat'][:loc['lat'].find('.')+3]
+    params['lng'] = loc['lng'][:loc['lng'].find('.')+3]
+
+    params['dist'] = config.get('distance') or DEFAULT_DISTANCE
+    params['back'] = config.get('back') or DEFAULT_BACK
+    params['maxResults'] = MAX_API_RESULTS
 
     return params
 
@@ -116,7 +134,6 @@ def format_bird_name(bird):
 
     # Hard-code some formatting until I feel like futzing with
     # the layout more
-    bird = bird.replace('Shouldered', 'Shoul-dered')
     bird = bird.replace('Hummingbird', 'Humming-bird')
     bird = bird.replace('catcher', '-catcher')
     bird = bird.replace('pecker', '-pecker')
@@ -193,4 +210,48 @@ def main(config):
                 )
             ]
         )
+    )
+
+
+def get_schema():
+    """Return the schema needed for Tidybyt community app installs."""
+
+    list_back = ["1", "2", "3", "4", "5", "6"]
+    options_back = [
+        schema.Option(display = item, value = item)
+        for item in list_back
+    ]
+
+    list_distance = ["1", "2", "5", "10", "25"]
+    options_distance = [
+        schema.Option(display = item, value = item)
+        for item in list_distance
+    ]
+
+    return schema.Schema(
+        version = "1",
+        fields = [
+            schema.Location(
+                id = "location",
+                name = "Location",
+                desc = "Location to search for bird sightings.",
+                icon = "locationDot"
+            ),
+            schema.Dropdown(
+                id = "distance",
+                name = "Distance",
+                desc = "Search radius from location (km)",
+                icon = "dove",
+                default = DEFAULT_DISTANCE,
+                options = options_distance
+            ),
+            schema.Dropdown(
+                id = "back",
+                name = "Back",
+                desc = "Number of days back to fetch bird sightings.",
+                icon = "calendarDays",
+                default = DEFAULT_BACK,
+                options = options_back
+            )
+        ],
     )
