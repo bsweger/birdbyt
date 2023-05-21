@@ -18,6 +18,15 @@ BIRD_ICON = base64.decode("""
 iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABOElEQVQ4T6VSPU8CMRh+uhBEHEgMGhCGczl3SdhcNXF2cnPG2d8Bi79BFzdnFkKCO7foAhovITEmBxwM1j4lvdxhDy7xTdqk7fP1vqnAP0tk5bunHbnCSngvtxEvk4Db6Mhy1YEGq80fv8IbrES2CriNtiIfo17dxegjQPfpEs3zB3xPfAwHLbFRgLHLNQf1ShGj9wCLxRT95ys0Lx61c+/uenMCRj84clCr0H2KZTiLRvY1+cTwppUusI3sqfipM1gnE2jc6WzIfwRI5GU8Ns/++A2l/UPMZwFCtawCJBOUyxcSXyNO5oNVwJANkyIksoyzjaxbIDlfKGJHLVvRUarGwnkyusEqgbYS2NNnghPFiahZc9z8NDaDKMF6bwT/3EOKkxzE2TL1w+kHthGfrHHKLGBtPuPlL42CnW2DwIuFAAAAAElFTkSuQmCC
 """)
 
+# Config defaults
+DEFAULT_LOCATION = {
+    # Easthampton, MA
+    'lat': '42.266757',
+    'lng': '-72.66898'
+}
+DEFAULT_DISTANCE = "5"
+DEFAULT_BACK = "2"
+
 def get_params(config):
     """Get params for e-birds request.
     
@@ -28,13 +37,15 @@ def get_params(config):
     """
 
     params = {}
-    params['dist'] = config.get('distance') or '5'
-    params['back'] = config.get('back') or '6'
-    params['maxResults'] = MAX_API_RESULTS
 
-    # Default the location to Easthampton, MA
-    params['lat'] = config.get('lat') or '42.266757'
-    params['lng'] = config.get('long') or '-72.66898'
+    location = config.get('location')
+    loc = json.decode(location) if location else DEFAULT_LOCATION
+    params['lat'] = loc['lat']
+    params['lng'] = loc['lng']
+
+    params['dist'] = config.get('distance') or DEFAULT_DISTANCE
+    params['back'] = config.get('back') or DEFAULT_BACK
+    params['maxResults'] = MAX_API_RESULTS
 
     return params
 
