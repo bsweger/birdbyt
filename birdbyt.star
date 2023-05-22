@@ -1,20 +1,19 @@
 """Birdbyt"""
 
 load('cache.star', 'cache')
-load("encoding/base64.star", "base64")
+load('encoding/base64.star', 'base64')
 load('encoding/json.star', 'json')
 load('http.star', 'http')
 load('humanize.star', 'humanize')
 load('random.star', 'random')
 load('render.star', 'render')
 load('schema.star', 'schema')
-load("secret.star", "secret")
+load("secret.star", 'secret')
 load('time.star', 'time')
 
-EBIRD_API_KEY = "AV6+xWcEv/YjkWNTF/Gyjx/ueAW476JLIwmwOHXQi8pNzE5Arbce6/bflzA0i0BIl/ocq1y/nNUFR/3lCZwUFmsbJ5s+R8YLlNNMmF1PNCi5IKgBaVDF8lUW+YFT7nUBkLXzt7JrorOsDGXBHejPq1tz"
+EBIRD_API_KEY = 'AV6+xWcECVOVS+y/jlkVqyE0oxKa9Ql7M/h05Xh+ilG7K+8ELfdgmPX6FPFcDdDuEz5PSbWO1sNs+XjhuS8Bm4qbT00tO0A3DIG5mDo78bAg2dhYVIhPyp/AyiCDzVadqN2KKGduX2NKdihnCyn4NWHW'
 EBIRD_URL = 'https://api.ebird.org/v2'
-MAX_API_RESULTS = "100"
-DEBUG = False
+MAX_API_RESULTS = '100'
 
 BIRD_ICON = base64.decode("""
 iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABOElEQVQ4T6VSPU8CMRh+uhBEHEgMGhCGczl3SdhcNXF2cnPG2d8Bi79BFzdnFkKCO7foAhovITEmBxwM1j4lvdxhDy7xTdqk7fP1vqnAP0tk5bunHbnCSngvtxEvk4Db6Mhy1YEGq80fv8IbrES2CriNtiIfo17dxegjQPfpEs3zB3xPfAwHLbFRgLHLNQf1ShGj9wCLxRT95ys0Lx61c+/uenMCRj84clCr0H2KZTiLRvY1+cTwppUusI3sqfipM1gnE2jc6WzIfwRI5GU8Ns/++A2l/UPMZwFCtawCJBOUyxcSXyNO5oNVwJANkyIksoyzjaxbIDlfKGJHLVvRUarGwnkyusEqgbYS2NNnghPFiahZc9z8NDaDKMF6bwT/3EOKkxzE2TL1w+kHthGfrHHKLGBtPuPlL42CnW2DwIuFAAAAAElFTkSuQmCC
@@ -23,11 +22,11 @@ iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABOElEQVQ4T6VSPU8CMRh+uhBEHEgMGhCG
 # Config defaults
 DEFAULT_LOCATION = {
     # Easthampton, MA
-    'lat': '42.266757',
-    'lng': '-72.66898'
+    'lat': '42.266',
+    'lng': '-72.668'
 }
-DEFAULT_DISTANCE = "5"
-DEFAULT_BACK = "2"
+DEFAULT_DISTANCE = '2'
+DEFAULT_BACK = '2'
 
 # When there are no birds
 NO_BIRDS = {
@@ -67,20 +66,16 @@ def get_recent_birds(params, ebird_key):
     cache_key = '-'.join(params.values())
     sightings = cache.get(cache_key)
     if sightings != None:
-        print("Cache hit:", cache_key)
+        print('Cache hit:', cache_key)  # buildifier: disable=print
         return json.decode(sightings)
 
     # Nothing cached, so call the API
-    print("Cache miss:", cache_key)
     ebird_recent_obs_route = '/data/obs/geo/recent'
+    print('Cache miss:', cache_key, '\nCalling ', ebird_recent_obs_route)  # buildifier: disable=print
     url = EBIRD_URL + ebird_recent_obs_route
     headers = {'X-eBirdApiToken': ebird_key}
 
     response = http.get(url, params=params, headers=headers)
-    if DEBUG:
-        print('HTTP status: ', response.status_code)
-        print(response.headers)
-        print(response.json())
 
     # e-bird API request failed
     if response.status_code != 200:
@@ -97,6 +92,7 @@ def format_sighting(sightings):
     sighting = {}
 
     number_of_sightings = len(sightings)
+    print('number of sightings: ', number_of_sightings)  # buildifier: disable=print
 
     # request succeeded, but no birds found
     if number_of_sightings == 0:
@@ -141,10 +137,11 @@ def format_bird_name(bird):
 
     # Hard-code some formatting until I feel like futzing with
     # the layout more
-    print('bird name: ', bird)
+    print('bird name: ', bird)  # buildifier: disable=print
     bird = bird.replace('Hummingbird', 'Humming-bird')
     bird = bird.replace('catcher', '-catcher')
     bird = bird.replace('pecker', '-pecker')
+    bird = bird.replace('thrush', '-thrush')
 
     # Wrapped text widget doesn't break on a hyphen, so force a newline
     # (many birds have hyphenated names, as it turns out)
@@ -224,40 +221,40 @@ def main(config):
 def get_schema():
     """Return the schema needed for Tidybyt community app installs."""
 
-    list_back = ["1", "2", "3", "4", "5", "6"]
+    list_back = ['1', '2', '3', '4', '5', '6']
     options_back = [
         schema.Option(display = item, value = item)
         for item in list_back
     ]
 
-    list_distance = ["1", "2", "5", "10", "25"]
+    list_distance = ['1', '2', '5', '10', '25']
     options_distance = [
         schema.Option(display = item, value = item)
         for item in list_distance
     ]
 
     return schema.Schema(
-        version = "1",
+        version = '1',
         fields = [
             schema.Location(
-                id = "location",
-                name = "Location",
-                desc = "Location to search for bird sightings.",
-                icon = "locationDot",
+                id = 'location',
+                name = 'Location',
+                desc = 'Location to search for bird sightings.',
+                icon = 'locationDot',
             ),
             schema.Dropdown(
-                id = "distance",
-                name = "Distance",
-                desc = "Search radius from location (km)",
-                icon = "dove",
+                id = 'distance',
+                name = 'Distance',
+                desc = 'Search radius from location (km)',
+                icon = 'dove',
                 default = DEFAULT_DISTANCE,
                 options = options_distance
             ),
             schema.Dropdown(
-                id = "back",
-                name = "Back",
-                desc = "Number of days back to fetch bird sightings.",
-                icon = "calendarDays",
+                id = 'back',
+                name = 'Back',
+                desc = 'Number of days back to fetch bird sightings.',
+                icon = 'calendarDays',
                 default = DEFAULT_BACK,
                 options = options_back
             )
