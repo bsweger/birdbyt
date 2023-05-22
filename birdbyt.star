@@ -14,6 +14,7 @@ load('time.star', 'time')
 EBIRD_API_KEY = "AV6+xWcEv/YjkWNTF/Gyjx/ueAW476JLIwmwOHXQi8pNzE5Arbce6/bflzA0i0BIl/ocq1y/nNUFR/3lCZwUFmsbJ5s+R8YLlNNMmF1PNCi5IKgBaVDF8lUW+YFT7nUBkLXzt7JrorOsDGXBHejPq1tz"
 EBIRD_URL = 'https://api.ebird.org/v2'
 MAX_API_RESULTS = "100"
+DEBUG = False
 
 BIRD_ICON = base64.decode("""
 iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABOElEQVQ4T6VSPU8CMRh+uhBEHEgMGhCGczl3SdhcNXF2cnPG2d8Bi79BFzdnFkKCO7foAhovITEmBxwM1j4lvdxhDy7xTdqk7fP1vqnAP0tk5bunHbnCSngvtxEvk4Db6Mhy1YEGq80fv8IbrES2CriNtiIfo17dxegjQPfpEs3zB3xPfAwHLbFRgLHLNQf1ShGj9wCLxRT95ys0Lx61c+/uenMCRj84clCr0H2KZTiLRvY1+cTwppUusI3sqfipM1gnE2jc6WzIfwRI5GU8Ns/++A2l/UPMZwFCtawCJBOUyxcSXyNO5oNVwJANkyIksoyzjaxbIDlfKGJHLVvRUarGwnkyusEqgbYS2NNnghPFiahZc9z8NDaDKMF6bwT/3EOKkxzE2TL1w+kHthGfrHHKLGBtPuPlL42CnW2DwIuFAAAAAElFTkSuQmCC
@@ -31,6 +32,14 @@ DEFAULT_LOCATION = {
 }
 DEFAULT_DISTANCE = "5"
 DEFAULT_BACK = "2"
+
+# When there are no birds
+NO_BIRDS = {
+    'bird': 'No birds found',
+    'loc': 'Try increasing search distance',
+    'date': time.now()
+}
+
 
 def get_params(config):
     """Get params for e-birds request.
@@ -74,6 +83,10 @@ def get_recent_birds(params, ebird_key):
     headers = {'X-eBirdApiToken': ebird_key}
 
     response = http.get(url, params=params, headers=headers)
+    if DEBUG:
+        print('HTTP status: ', response.status_code)
+        print(response.headers)
+        print(response.json())
 
     # e-bird API request failed
     if response.status_code != 200:
@@ -91,9 +104,9 @@ def format_sighting(sightings):
 
     number_of_sightings = len(sightings)
 
-    # request succeeded, but no data was returned
+    # request succeeded, but no birds found
     if number_of_sightings == 0:
-        sighting['bird'] = ['No recent sightings']
+        sighting = NO_BIRDS
         return sighting
     
     # grab a random bird sighting from ebird response
@@ -134,6 +147,7 @@ def format_bird_name(bird):
 
     # Hard-code some formatting until I feel like futzing with
     # the layout more
+    print('bird name: ', bird)
     bird = bird.replace('Hummingbird', 'Humming-bird')
     bird = bird.replace('catcher', '-catcher')
     bird = bird.replace('pecker', '-pecker')
