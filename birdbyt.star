@@ -22,13 +22,9 @@ iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABOElEQVQ4T6VSPU8CMRh+uhBEHEgMGhCG
 
 # Config defaults
 DEFAULT_LOCATION = {
-    'lat': '42.27',
-    'lng': '-72.67',
-    'description': 'Easthampton, MA, USA',
-    'locality':  'Easthampton',
-    'place_id': 'ChIJZyTslVXY5okRqOO1o8XjhA0',
-    'timezone': 'America/New_York"'
-
+    # Easthampton, MA
+    'lat': '42.266757',
+    'lng': '-72.66898'
 }
 DEFAULT_DISTANCE = "5"
 DEFAULT_BACK = "2"
@@ -54,10 +50,8 @@ def get_params(config):
 
     location = config.get('location')
     loc = json.decode(location) if location else DEFAULT_LOCATION
-    
-    # Make incoming lat/long slightly less granular
-    params['lat'] = loc['lat'][:loc['lat'].find('.')+3]
-    params['lng'] = loc['lng'][:loc['lng'].find('.')+3]
+    params['lat'] = loc['lat']
+    params['lng'] = loc['lng']
 
     params['dist'] = config.get('distance') or DEFAULT_DISTANCE
     params['back'] = config.get('back') or DEFAULT_BACK
@@ -249,7 +243,7 @@ def get_schema():
                 id = "location",
                 name = "Location",
                 desc = "Location to search for bird sightings.",
-                icon = "locationDot"
+                icon = "locationDot",
             ),
             schema.Dropdown(
                 id = "distance",
