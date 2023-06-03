@@ -38,7 +38,7 @@ NO_BIRDS = {
 
 def get_params(config):
     """Get params for e-birds request.
-    
+
     Args:
       config: config dict passed from the app
     Returns:
@@ -60,7 +60,15 @@ def get_params(config):
 
 
 def get_recent_birds(params, ebird_key):
-    """Request a list of recent birds."""
+    """Request a list of recent birds.
+
+    Args:
+      params: dictionary of parameters for the ebird API call
+      ebird_key: ebird API key
+
+    Returns:
+      ebird sightings data
+    """
 
     # Do we already have cached data for this set of API params?
     cache_key = '-'.join(params.values())
@@ -87,7 +95,14 @@ def get_recent_birds(params, ebird_key):
 
 
 def format_sighting(sightings):
-    """Parse ebird response data."""
+    """Parse ebird response data.
+
+    Args:
+      sightings: ebird sightings data
+
+    Returns:
+      a dictionary representing a single bird sighting
+    """
 
     sighting = {}
 
@@ -111,7 +126,14 @@ def format_sighting(sightings):
 
 
 def get_sighting_day(sighting_date):
-    """Return day of sighting."""
+    """Return day of sighting.
+
+    Args:
+      sighting_date: full date/time of a bird sighting
+
+    Returns:
+      a string representing the sighting's day of the week (or today)
+    """
 
     days = {
         0: 'Monday',
@@ -133,7 +155,14 @@ def get_sighting_day(sighting_date):
     return sighting_day
 
 def format_bird_name(bird):
-    """Format bird name for display."""
+    """Format bird name for display.
+
+    Args:
+      bird: name of the bird returned from API
+
+    Returns:
+      bird name modified for Tidbyt display
+    """
 
     # Hard-code some formatting until I feel like futzing with
     # the layout more
@@ -150,7 +179,14 @@ def format_bird_name(bird):
 
 
 def get_scroll_text(sighting):
-    """Return a text string to scroll in the bottom marquee."""
+    """Return a text string to scroll in the bottom marquee.
+
+    Args:
+      sighting: a dictionary representing a single bird sighting
+
+    Returns:
+      text to scroll at the bottom of the Tidbyt display
+    """
 
     day = get_sighting_day(sighting['date'])
     scroll_text = day + ': ' + sighting['loc']
@@ -160,11 +196,12 @@ def get_scroll_text(sighting):
 
 def main(config):
     """Update config.
-    
+
     Args:
       config: config dict passed from the app
+
     Returns:
-      ???
+      rendered WebP image for Tidbyt display
     """
     ebird_key = secret.decrypt(EBIRD_API_KEY) or config.get('ebird_api_key')
     params = get_params(config)
@@ -219,7 +256,11 @@ def main(config):
 
 
 def get_schema():
-    """Return the schema needed for Tidybyt community app installs."""
+    """Return the schema needed for Tidybyt community app installs.
+
+    Returns:
+      Tidbyt schema
+    """
 
     list_back = ['1', '2', '3', '4', '5', '6']
     options_back = [
