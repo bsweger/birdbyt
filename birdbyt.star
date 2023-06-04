@@ -23,7 +23,8 @@ iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABOElEQVQ4T6VSPU8CMRh+uhBEHEgMGhCG
 DEFAULT_LOCATION = {
     # Easthampton, MA
     'lat': '42.266',
-    'lng': '-72.668'
+    'lng': '-72.668',
+    'timezone': 'America/New_York'
 }
 DEFAULT_DISTANCE = '2'
 DEFAULT_BACK = '2'
@@ -50,6 +51,7 @@ def get_params(config):
     loc = json.decode(location) if location else DEFAULT_LOCATION
     params['lat'] = loc['lat']
     params['lng'] = loc['lng']
+    params['tz'] = loc['timezone'] if time.is_valid_timezone(loc['timezone']) else DEFAULT_LOCATION['timezone']
 
     params['dist'] = config.get('distance') or DEFAULT_DISTANCE
     params['back'] = config.get('back') or DEFAULT_BACK
@@ -96,11 +98,12 @@ def get_recent_birds(params, ebird_key):
     return sightings
 
 
-def format_sighting(sightings):
+def format_sighting(sightings, tz):
     """Parse ebird response data.
 
     Args:
       sightings: list of ebird sightings
+      tz: application's timezone
 
     Returns:
       a dictionary representing a single bird sighting
@@ -123,13 +126,17 @@ def format_sighting(sightings):
     sighting['bird'] = data.get('comName') or 'Unknown bird'
     sighting['loc'] = data.get('locName') or 'Location unknown'
     if data.get('obsDt'):
-        sighting['date'] = time.parse_time(data.get('obsDt'), format='2006-01-02 15:04')
+        sighting['date'] = time.parse_time(data.get('obsDt'), format='2006-01-02 15:04', location=tz)
     
     return sighting
 
 
 def get_sighting_day(sighting_date):
     """Return day of sighting.
+
+    Given the date object of a bird sighting, return corresponding day of
+    the week. Because sighting data is coming from eBird's nearby observations
+    API, we'll assume the sightings time zone corresponds to that of local time
 
     Args:
       sighting_date: full date/time of a bird sighting
@@ -139,13 +146,13 @@ def get_sighting_day(sighting_date):
     """
 
     days = {
-        0: 'Monday',
-        1: 'Tuesday',
-        2: 'Wednesday',
-        3: 'Thursday',
-        4: 'Friday',
-        5: 'Saturday',
-        6: 'Sunday'
+        0: 'Sunday',
+        1: 'Monday',
+        2: 'Tuesday',
+        3: 'Wednesday',
+        4: 'Thursday',
+        5: 'Friday',
+        6: 'Saturday'
     }
 
     day_of_week = humanize.day_of_week(sighting_date)
@@ -212,7 +219,7 @@ def main(config):
     ebird_key = secret.decrypt(EBIRD_API_KEY) or config.get('ebird_api_key')
     params = get_params(config)
     response = get_recent_birds(params, ebird_key)
-    sighting = format_sighting(response)
+    sighting = format_sighting(response, params['tz'])
 
     return render.Root(
         render.Column(
