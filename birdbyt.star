@@ -31,8 +31,7 @@ DEFAULT_BACK = '2'
 # When there are no birds
 NO_BIRDS = {
     'bird': 'No birds found',
-    'loc': 'Try increasing search distance',
-    'date': time.now()
+    'loc': 'Try increasing search distance'
 }
 
 
@@ -87,7 +86,10 @@ def get_recent_birds(params, ebird_key):
 
     # e-bird API request failed
     if response.status_code != 200:
-        return []
+        return [{
+            'comName': 'Bird error!',
+            'locName': 'API status code = ' + str(response.status_code)
+        }]
 
     sightings = response.json()
     cache.set(cache_key, json.encode(sightings), ttl_seconds=3600)
@@ -98,7 +100,7 @@ def format_sighting(sightings):
     """Parse ebird response data.
 
     Args:
-      sightings: ebird sightings data
+      sightings: list of ebird sightings
 
     Returns:
       a dictionary representing a single bird sighting
@@ -118,9 +120,10 @@ def format_sighting(sightings):
     random_sighting = random.number(0, number_of_sightings - 1)
     data = sightings[random_sighting]
 
-    sighting['bird'] = data.get('comName')
+    sighting['bird'] = data.get('comName') or 'Unknown bird'
     sighting['loc'] = data.get('locName') or 'Location unknown'
-    sighting['date'] = time.parse_time(data.get('obsDt'), format='2006-01-02 15:04')
+    if data.get('obsDt'):
+        sighting['date'] = time.parse_time(data.get('obsDt'), format='2006-01-02 15:04')
     
     return sighting
 
@@ -188,8 +191,11 @@ def get_scroll_text(sighting):
       text to scroll at the bottom of the Tidbyt display
     """
 
-    day = get_sighting_day(sighting['date'])
-    scroll_text = day + ': ' + sighting['loc']
+    if sighting.get('date'):
+        day = get_sighting_day(sighting['date'])
+        scroll_text = day + ': ' + sighting.get('loc')
+    else:
+        scroll_text = sighting.get('loc')
     
     return scroll_text
  
