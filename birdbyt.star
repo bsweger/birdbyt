@@ -174,6 +174,7 @@ def format_bird_name(bird):
     # the layout more
     print('bird name: ', bird)  # buildifier: disable=print
     bird = bird.replace('Hummingbird', 'Humming-bird')
+    bird = bird.replace('mockingbird', 'mocking-bird')
     bird = bird.replace('catcher', '-catcher')
     bird = bird.replace('pecker', '-pecker')
     bird = bird.replace('thrush', '-thrush')
@@ -256,6 +257,7 @@ def main(config):
                                 child=render.Text(
                                     color='fefbbd',
                                     font='tom-thumb',
+                                    offset=-1,
                                     content=get_scroll_text(sighting)
                                 )
                             )
