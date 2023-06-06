@@ -1,1 +1,7 @@
 *.webp
+**/*.bak
+**/.env
+assets/
+logs/
+sample_data/
+
