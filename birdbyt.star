@@ -22,8 +22,9 @@ DEFAULT_LOCATION = {
     'lng': '-72.668',
     'timezone': 'America/New_York'
 }
-DEFAULT_DISTANCE = '2'
+DEFAULT_DISTANCE = '5'
 DEFAULT_BACK = '2'
+DEFAULT_PROVISIONAL = False
 
 # When there are no birds
 NO_BIRDS = {
@@ -51,6 +52,7 @@ def get_params(config):
 
     params['dist'] = config.get('distance') or DEFAULT_DISTANCE
     params['back'] = config.get('back') or DEFAULT_BACK
+    params['includeProvisional'] = str(config.get('provisional') or DEFAULT_PROVISIONAL)
     params['maxResults'] = MAX_API_RESULTS
 
     return params
@@ -348,7 +350,7 @@ def get_schema():
                 id = 'distance',
                 name = 'Distance',
                 desc = 'Search radius from location (km)',
-                icon = 'dove',
+                icon = 'feather',
                 default = DEFAULT_DISTANCE,
                 options = options_distance
             ),
@@ -359,6 +361,13 @@ def get_schema():
                 icon = 'calendarDays',
                 default = DEFAULT_BACK,
                 options = options_back
+            ),
+            schema.Toggle(
+                id = 'provisional',
+                name = 'Provisional',
+                desc = 'Include sightings not yet reviewed.',
+                icon = 'clipboardCheck',
+                default = DEFAULT_PROVISIONAL
             )
         ],
     )
