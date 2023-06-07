@@ -93,6 +93,8 @@ def get_notable_sightings(params, ebird_key):
 
     notable_sightings = response.json()
     notable_list = [s.get('speciesCode') for s in notable_sightings]
+    print('number of notable sightings: ', len(notable_list))  # buildifier: disable=print
+
     cache.set(cache_key, json.encode(notable_list), ttl_seconds=3600)
 
     return notable_list
@@ -257,7 +259,7 @@ def get_schema():
         for item in list_back
     ]
 
-    list_distance = ['1', '2', '5', '10', '25']
+    list_distance = ['1', '2', '5', '10', '25', '50']
     options_distance = [
         schema.Option(display = item, value = item)
         for item in list_distance
