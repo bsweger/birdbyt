@@ -93,6 +93,8 @@ def get_notable_sightings(params, ebird_key):
 
     notable_sightings = response.json()
     notable_list = [s.get('speciesCode') for s in notable_sightings]
+    print('number of notable sightings: ', len(notable_list))  # buildifier: disable=print
+
     cache.set(cache_key, json.encode(notable_list), ttl_seconds=3600)
 
     return notable_list
@@ -136,7 +138,7 @@ def get_recent_birds(params, ebird_key):
     return sightings
 
 
-def format_sighting(sightings, tz):
+def parse_birds(sightings, tz):
     """Parse ebird response data.
 
     Args:
@@ -167,83 +169,6 @@ def format_sighting(sightings, tz):
         sighting['date'] = time.parse_time(data.get('obsDt'), format='2006-01-02 15:04', location=tz)
     
     return sighting
-
-
-def get_sighting_day(sighting_date):
-    """Return day of sighting.
-
-    Given the date object of a bird sighting, return corresponding day of
-    the week. Because sighting data is coming from eBird's nearby observations
-    API, we'll assume the sightings time zone corresponds to that of local time
-
-    Args:
-      sighting_date: full date/time of a bird sighting
-
-    Returns:
-      a string representing the sighting's day of the week (or today)
-    """
-
-    days = {
-        0: 'Sunday',
-        1: 'Monday',
-        2: 'Tuesday',
-        3: 'Wednesday',
-        4: 'Thursday',
-        5: 'Friday',
-        6: 'Saturday'
-    }
-
-    day_of_week = humanize.day_of_week(sighting_date)
-
-    if day_of_week == humanize.day_of_week(time.now()):
-        sighting_day = 'Today'
-    else:
-        sighting_day = days[day_of_week]
-
-    return sighting_day
-
-def format_bird_name(bird):
-    """Format bird name for display.
-
-    Args:
-      bird: name of the bird returned from API
-
-    Returns:
-      bird name modified for Tidbyt display
-    """
-
-    # Hard-code some formatting until I feel like futzing with
-    # the layout more
-    print('bird name: ', bird)  # buildifier: disable=print
-    bird = bird.replace('Hummingbird', 'Humming-bird')
-    bird = bird.replace('mockingbird', 'mocking-bird')
-    bird = bird.replace('catcher', '-catcher')
-    bird = bird.replace('pecker', '-pecker')
-    bird = bird.replace('thrush', '-thrush')
-
-    # Wrapped text widget doesn't break on a hyphen, so force a newline
-    # (many birds have hyphenated names, as it turns out)
-    bird = bird.replace('-', '-\n')
-    return bird
-
-
-def get_scroll_text(sighting):
-    """Return a text string to scroll in the bottom marquee.
-
-    Args:
-      sighting: a dictionary representing a single bird sighting
-
-    Returns:
-      text to scroll at the bottom of the Tidbyt display
-    """
-
-    if sighting.get('date'):
-        day = get_sighting_day(sighting['date'])
-        scroll_text = day + ': ' + sighting.get('loc')
-    else:
-        scroll_text = sighting.get('loc')
-    
-    return scroll_text
  
 
 def main(config):
@@ -257,8 +182,10 @@ def main(config):
     """
     ebird_key = secret.decrypt(EBIRD_API_KEY) or config.get('ebird_api_key')
     params = get_params(config)
+    timezone = params.pop('tz')
     response = get_recent_birds(params, ebird_key)
-    sighting = format_sighting(response, params['tz'])
+    sighting = parse_birds(response, timezone)
+    bird_formatted, bird_font = format_bird_name(sighting.get('bird'))
 
     # if this is a notable sighting, render an excitable bird
     notable_list = get_notable_sightings(params, ebird_key)
@@ -289,7 +216,8 @@ def main(config):
                                 height=25,
                                 child=render.WrappedText(
                                     align='left',
-                                    content=format_bird_name(sighting.get('bird'))
+                                    font=bird_font,
+                                    content=bird_formatted
                                 )
                             )
                         )
@@ -331,7 +259,7 @@ def get_schema():
         for item in list_back
     ]
 
-    list_distance = ['1', '2', '5', '10', '25']
+    list_distance = ['1', '2', '5', '10', '25', '50']
     options_distance = [
         schema.Option(display = item, value = item)
         for item in list_distance
@@ -371,6 +299,81 @@ def get_schema():
             )
         ],
     )
+
+#------------------------------------------------------------------------
+# Formatting functions for display text
+#------------------------------------------------------------------------
+
+def get_scroll_text(sighting):
+    """Return a text string to scroll in the bottom marquee.
+
+    Args:
+      sighting: a dictionary representing a single bird sighting
+
+    Returns:
+      text to scroll at the bottom of the Tidbyt display
+    """
+
+    days = {
+        0: 'Sun',
+        1: 'Mon',
+        2: 'Tues',
+        3: 'Wed',
+        4: 'Thur',
+        5: 'Fri',
+        6: 'Sat'
+    }
+
+    sighting_date = sighting.get('date')
+
+    if sighting_date:
+        day_of_week = humanize.day_of_week(sighting_date)
+        # local timezone should = bird sighting timezone since both are derived from location config
+        sighting_day = 'Today' if day_of_week == humanize.day_of_week(time.now()) else days[day_of_week]
+        scroll_text = sighting_day + ': ' + sighting.get('loc')
+    else:
+        scroll_text = sighting.get('loc')
+    
+    return scroll_text
+
+
+def format_bird_name(bird):
+    """Format bird name for display.
+
+    Args:
+      bird: name of the bird returned from API
+
+    Returns:
+      bird name modified for Tidbyt display
+      Tidbyt font to use for bird name display
+    """
+
+    # Hard code hyphens into bird names that exceed a single
+    # line on the Tidbyt display. This is an incomplete list.
+    print('bird name: ', bird)  # buildifier: disable=print
+
+    bird = bird.replace('Hummingbird', 'Humming-bird')
+    bird = bird.replace('mockingbird', 'mocking-bird')
+    bird = bird.replace('Butcherbird', 'Butcher-bird')
+    bird = bird.replace('Australasian', 'Austra-lasian')
+    bird = bird.replace('Apostlebird', 'Apostle-bird')
+    bird = bird.replace('Honeyeater', 'Honey-eater')
+    bird = bird.replace('Currawong', 'Curra-wong')
+    bird = bird.replace('Australian', 'Austra-lian')
+    bird = bird.replace('catcher', '-catcher')
+    bird = bird.replace('pecker', '-pecker')
+    bird = bird.replace('thrush', '-thrush')
+
+    # Wrapped text widget doesn't break on a hyphen, so force a newline
+    # (many birds have hyphenated names, as it turns out)
+    bird = bird.replace('-', '-\n')
+
+    # Setting an explicit bird name font here lays groundwork for a future
+    # enhancement that can return a smaller font when bird names are long
+    # (9 letters is max size of a word that displays w/o cutting off)
+    font = 'tb-8'
+
+    return bird, font
 
 
 #------------------------------------------------------------------------
