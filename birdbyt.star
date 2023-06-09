@@ -351,22 +351,30 @@ def format_bird_name(bird):
     # Hard code hyphens into bird names that exceed a single
     # line on the Tidbyt display. This is an incomplete list.
     print('bird name: ', bird)  # buildifier: disable=print
-
-    bird = bird.replace('Hummingbird', 'Humming-bird')
-    bird = bird.replace('mockingbird', 'mocking-bird')
-    bird = bird.replace('Butcherbird', 'Butcher-bird')
-    bird = bird.replace('Australasian', 'Austra-lasian')
     bird = bird.replace('Apostlebird', 'Apostle-bird')
-    bird = bird.replace('Honeyeater', 'Honey-eater')
-    bird = bird.replace('Currawong', 'Curra-wong')
+    bird = bird.replace('Australasian', 'Austra-lasian')
     bird = bird.replace('Australian', 'Austra-lian')
+    bird = bird.replace('Blackburnian', 'Black-burnian')
+    bird = bird.replace('Butcherbird', 'Butcher-bird')
+    bird = bird.replace('Currawong', 'Curra-wong')
+    bird = bird.replace('Honeyeater', 'Honey-eater')
+    bird = bird.replace('Hummingbird', 'Humming-bird')
+    bird = bird.replace('Mockingbird', 'Mocking-bird')
+    bird = bird.replace('Yellowthroat', 'Yellow-throat')
     bird = bird.replace('catcher', '-catcher')
     bird = bird.replace('pecker', '-pecker')
     bird = bird.replace('thrush', '-thrush')
 
     # Wrapped text widget doesn't break on a hyphen, so force a newline
-    # (many birds have hyphenated names, as it turns out)
-    bird = bird.replace('-', '-\n')
+    # if a hyphenated bird name will exceed 9 characters
+    bird_parts = bird.split()
+    split_bird = [
+        b.replace('-', '-\n', 1)
+        if len(b) > 9
+        else b
+        for b in bird_parts
+    ]
+    bird = ' '.join(split_bird)
 
     # Setting an explicit bird name font here lays groundwork for a future
     # enhancement that can return a smaller font when bird names are long
