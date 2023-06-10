@@ -95,7 +95,7 @@ def get_notable_sightings(params, ebird_key):
     notable_list = [s.get('speciesCode') for s in notable_sightings]
     print('number of notable sightings: ', len(notable_list))  # buildifier: disable=print
 
-    cache.set(cache_key, json.encode(notable_list), ttl_seconds=3600)
+    cache.set(cache_key, json.encode(notable_list), ttl_seconds=1800)
 
     return notable_list
 
