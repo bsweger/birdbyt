@@ -165,6 +165,7 @@ def parse_birds(sightings, tz):
 
     sighting['bird'] = data.get('comName') or 'Unknown bird'
     sighting['loc'] = data.get('locName') or 'Location unknown'
+    sighting["species"] = data.get("speciesCode") or "Unknown species code"
     if data.get('obsDt'):
         sighting['date'] = time.parse_time(data.get('obsDt'), format='2006-01-02 15:04', location=tz)
     
@@ -189,7 +190,7 @@ def main(config):
 
     # if this is a notable sighting, render an excitable bird
     notable_list = get_notable_sightings(params, ebird_key)
-    if sighting.get('speciesCode') in notable_list:
+    if sighting.get('species') in notable_list:
         bird_image = PURPLE_BIRD_JUMP
     else:
         bird_image = PURPLE_BIRD_IDLE
