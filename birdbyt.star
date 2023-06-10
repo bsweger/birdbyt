@@ -1,37 +1,41 @@
-"""Birdbyt"""
+"""
+Applet: Birdbyt
+Summary: Show nearby bird sightings
+Description: Displays a random bird sighting near a specific location.
+Author: Becky Sweger
+"""
 
-load('cache.star', 'cache')
-load('encoding/base64.star', 'base64')
-load('encoding/json.star', 'json')
-load('http.star', 'http')
-load('humanize.star', 'humanize')
-load('random.star', 'random')
-load('render.star', 'render')
-load('schema.star', 'schema')
-load("secret.star", 'secret')
-load('time.star', 'time')
+load("cache.star", "cache")
+load("encoding/base64.star", "base64")
+load("encoding/json.star", "json")
+load("http.star", "http")
+load("humanize.star", "humanize")
+load("random.star", "random")
+load("render.star", "render")
+load("schema.star", "schema")
+load("secret.star", "secret")
+load("time.star", "time")
 
-EBIRD_API_KEY = 'AV6+xWcECVOVS+y/jlkVqyE0oxKa9Ql7M/h05Xh+ilG7K+8ELfdgmPX6FPFcDdDuEz5PSbWO1sNs+XjhuS8Bm4qbT00tO0A3DIG5mDo78bAg2dhYVIhPyp/AyiCDzVadqN2KKGduX2NKdihnCyn4NWHW'
-EBIRD_URL = 'https://api.ebird.org/v2'
-MAX_API_RESULTS = '100'
+EBIRD_API_KEY = "AV6+xWcECVOVS+y/jlkVqyE0oxKa9Ql7M/h05Xh+ilG7K+8ELfdgmPX6FPFcDdDuEz5PSbWO1sNs+XjhuS8Bm4qbT00tO0A3DIG5mDo78bAg2dhYVIhPyp/AyiCDzVadqN2KKGduX2NKdihnCyn4NWHW"
+EBIRD_URL = "https://api.ebird.org/v2"
+MAX_API_RESULTS = "100"
 
 # Config defaults
 DEFAULT_LOCATION = {
     # Easthampton, MA
-    'lat': '42.266',
-    'lng': '-72.668',
-    'timezone': 'America/New_York'
+    "lat": "42.266",
+    "lng": "-72.668",
+    "timezone": "America/New_York",
 }
-DEFAULT_DISTANCE = '5'
-DEFAULT_BACK = '2'
+DEFAULT_DISTANCE = "5"
+DEFAULT_BACK = "2"
 DEFAULT_PROVISIONAL = False
 
 # When there are no birds
 NO_BIRDS = {
-    'bird': 'No birds found',
-    'loc': 'Try increasing search distance'
+    "bird": "No birds found",
+    "loc": "Try increasing search distance",
 }
-
 
 def get_params(config):
     """Get params for e-birds request.
@@ -44,19 +48,18 @@ def get_params(config):
 
     params = {}
 
-    location = config.get('location')
+    location = config.get("location")
     loc = json.decode(location) if location else DEFAULT_LOCATION
-    params['lat'] = loc['lat']
-    params['lng'] = loc['lng']
-    params['tz'] = loc['timezone'] if time.is_valid_timezone(loc['timezone']) else DEFAULT_LOCATION['timezone']
+    params["lat"] = loc["lat"]
+    params["lng"] = loc["lng"]
+    params["tz"] = loc["timezone"] if time.is_valid_timezone(loc["timezone"]) else DEFAULT_LOCATION["timezone"]
 
-    params['dist'] = config.get('distance') or DEFAULT_DISTANCE
-    params['back'] = config.get('back') or DEFAULT_BACK
-    params['includeProvisional'] = str(config.get('provisional') or DEFAULT_PROVISIONAL)
-    params['maxResults'] = MAX_API_RESULTS
+    params["dist"] = config.get("distance") or DEFAULT_DISTANCE
+    params["back"] = config.get("back") or DEFAULT_BACK
+    params["includeProvisional"] = str(config.get("provisional") or DEFAULT_PROVISIONAL)
+    params["maxResults"] = MAX_API_RESULTS
 
     return params
-
 
 def get_notable_sightings(params, ebird_key):
     """Request a list of recent notable bird sightings.
@@ -70,35 +73,34 @@ def get_notable_sightings(params, ebird_key):
     """
 
     notable_params = params
-    notable_params.pop('maxResults', None)
+    notable_params.pop("maxResults", None)
 
-     # Do we already have cached data for this set of API params?
-    cache_key = 'notable' + '-'.join(params.values())
+    # Do we already have cached data for this set of API params?
+    cache_key = "notable" + "-".join(params.values())
     notable_list = cache.get(cache_key)
     if notable_list != None:
-        print('Cache hit:', cache_key)  # buildifier: disable=print
+        print("Cache hit:", cache_key)  # buildifier: disable=print
         return json.decode(notable_list)
 
     # Nothing cached, so call the API
-    ebird_recent_obs_route = '/data/obs/geo/recent/notable'
-    print('Cache miss:', cache_key, '\nCalling ', ebird_recent_obs_route)  # buildifier: disable=print
+    ebird_recent_obs_route = "/data/obs/geo/recent/notable"
+    print("Cache miss:", cache_key, "\nCalling ", ebird_recent_obs_route)  # buildifier: disable=print
     url = EBIRD_URL + ebird_recent_obs_route
-    headers = {'X-eBirdApiToken': ebird_key}
+    headers = {"X-eBirdApiToken": ebird_key}
 
-    response = http.get(url, params=params, headers=headers)
+    response = http.get(url, params = params, headers = headers)
 
     # e-bird API request failed
     if response.status_code != 200:
         return []
 
     notable_sightings = response.json()
-    notable_list = [s.get('speciesCode') for s in notable_sightings]
-    print('number of notable sightings: ', len(notable_list))  # buildifier: disable=print
+    notable_list = [s.get("speciesCode") for s in notable_sightings]
+    print("number of notable sightings: ", len(notable_list))  # buildifier: disable=print
 
-    cache.set(cache_key, json.encode(notable_list), ttl_seconds=1800)
+    cache.set(cache_key, json.encode(notable_list), ttl_seconds = 1800)
 
     return notable_list
-
 
 def get_recent_birds(params, ebird_key):
     """Request a list of recent birds.
@@ -112,31 +114,30 @@ def get_recent_birds(params, ebird_key):
     """
 
     # Do we already have cached data for this set of API params?
-    cache_key = '-'.join(params.values())
+    cache_key = "-".join(params.values())
     sightings = cache.get(cache_key)
     if sightings != None:
-        print('Cache hit:', cache_key)  # buildifier: disable=print
+        print("Cache hit:", cache_key)  # buildifier: disable=print
         return json.decode(sightings)
 
     # Nothing cached, so call the API
-    ebird_recent_obs_route = '/data/obs/geo/recent'
-    print('Cache miss:', cache_key, '\nCalling ', ebird_recent_obs_route)  # buildifier: disable=print
+    ebird_recent_obs_route = "/data/obs/geo/recent"
+    print("Cache miss:", cache_key, "\nCalling ", ebird_recent_obs_route)  # buildifier: disable=print
     url = EBIRD_URL + ebird_recent_obs_route
-    headers = {'X-eBirdApiToken': ebird_key}
+    headers = {"X-eBirdApiToken": ebird_key}
 
-    response = http.get(url, params=params, headers=headers)
+    response = http.get(url, params = params, headers = headers)
 
     # e-bird API request failed
     if response.status_code != 200:
         return [{
-            'comName': 'Bird error!',
-            'locName': 'API status code = ' + str(response.status_code)
+            "comName": "Bird error!",
+            "locName": "API status code = " + str(response.status_code),
         }]
 
     sightings = response.json()
-    cache.set(cache_key, json.encode(sightings), ttl_seconds=3600)
+    cache.set(cache_key, json.encode(sightings), ttl_seconds = 3600)
     return sightings
-
 
 def parse_birds(sightings, tz):
     """Parse ebird response data.
@@ -152,25 +153,24 @@ def parse_birds(sightings, tz):
     sighting = {}
 
     number_of_sightings = len(sightings)
-    print('number of sightings: ', number_of_sightings)  # buildifier: disable=print
+    print("number of sightings: ", number_of_sightings)  # buildifier: disable=print
 
     # request succeeded, but no birds found
     if number_of_sightings == 0:
         sighting = NO_BIRDS
         return sighting
-    
+
     # grab a random bird sighting from ebird response
     random_sighting = random.number(0, number_of_sightings - 1)
     data = sightings[random_sighting]
 
-    sighting['bird'] = data.get('comName') or 'Unknown bird'
-    sighting['loc'] = data.get('locName') or 'Location unknown'
+    sighting["bird"] = data.get("comName") or "Unknown bird"
+    sighting["loc"] = data.get("locName") or "Location unknown"
     sighting["species"] = data.get("speciesCode") or "Unknown species code"
-    if data.get('obsDt'):
-        sighting['date'] = time.parse_time(data.get('obsDt'), format='2006-01-02 15:04', location=tz)
-    
+    if data.get("obsDt"):
+        sighting["date"] = time.parse_time(data.get("obsDt"), format = "2006-01-02 15:04", location = tz)
+
     return sighting
- 
 
 def main(config):
     """Update config.
@@ -181,71 +181,71 @@ def main(config):
     Returns:
       rendered WebP image for Tidbyt display
     """
-    ebird_key = secret.decrypt(EBIRD_API_KEY) or config.get('ebird_api_key')
+    ebird_key = secret.decrypt(EBIRD_API_KEY) or config.get("ebird_api_key")
     params = get_params(config)
-    timezone = params.pop('tz')
+    timezone = params.pop("tz")
     response = get_recent_birds(params, ebird_key)
     sighting = parse_birds(response, timezone)
-    bird_formatted, bird_font = format_bird_name(sighting.get('bird'))
+    bird_formatted, bird_font = format_bird_name(sighting.get("bird"))
 
     # if this is a notable sighting, render an excitable bird
     notable_list = get_notable_sightings(params, ebird_key)
-    if sighting.get('species') in notable_list:
+    if sighting.get("species") in notable_list:
         bird_image = PURPLE_BIRD_JUMP
     else:
         bird_image = PURPLE_BIRD_IDLE
 
     return render.Root(
         render.Column(
-            children=[
+            children = [
                 render.Row(
-                    children=[
-                        render.Column(     
-                            children=[
+                    children = [
+                        render.Column(
+                            children = [
                                 render.Box(
-                                    width=18,
-                                    height=25,
-                                    child=render.Image(src=bird_image)),
-                            ]
+                                    width = 18,
+                                    height = 25,
+                                    child = render.Image(src = bird_image),
+                                ),
+                            ],
                         ),
                         render.Box(
-                            height=25,
-                            padding=1,
-                            child=render.Marquee(
-                                scroll_direction='vertical',
-                                align='center',
-                                height=25,
-                                child=render.WrappedText(
-                                    align='left',
-                                    font=bird_font,
-                                    content=bird_formatted
-                                )
-                            )
-                        )
-                    ]
+                            height = 25,
+                            padding = 1,
+                            child = render.Marquee(
+                                scroll_direction = "vertical",
+                                align = "center",
+                                height = 25,
+                                child = render.WrappedText(
+                                    align = "left",
+                                    font = bird_font,
+                                    content = bird_formatted,
+                                ),
+                            ),
+                        ),
+                    ],
                 ),
                 render.Row(
-                    expanded=True,
-                    cross_align='end',
-                    children=[
+                    expanded = True,
+                    cross_align = "end",
+                    children = [
                         render.Box(
-                            color='043927',
-                            child=render.Marquee(
-                                width=64,
-                                child=render.Text(
-                                    color='fefbbd',
-                                    font='tom-thumb',
-                                    offset=-1,
-                                    content=get_scroll_text(sighting)
-                                )
-                            )
-                        )
-                    ]
-                )
-            ]
-        )
+                            color = "043927",
+                            child = render.Marquee(
+                                width = 64,
+                                child = render.Text(
+                                    color = "fefbbd",
+                                    font = "tom-thumb",
+                                    offset = -1,
+                                    content = get_scroll_text(sighting),
+                                ),
+                            ),
+                        ),
+                    ],
+                ),
+            ],
+        ),
     )
-
 
 def get_schema():
     """Return the schema needed for Tidybyt community app installs.
@@ -254,50 +254,50 @@ def get_schema():
       Tidbyt schema
     """
 
-    list_back = ['1', '2', '3', '4', '5', '6']
+    list_back = ["1", "2", "3", "4", "5", "6"]
     options_back = [
         schema.Option(display = item, value = item)
         for item in list_back
     ]
 
-    list_distance = ['1', '2', '5', '10', '25', '50']
+    list_distance = ["1", "2", "5", "10", "25", "50"]
     options_distance = [
         schema.Option(display = item, value = item)
         for item in list_distance
     ]
 
     return schema.Schema(
-        version = '1',
+        version = "1",
         fields = [
             schema.Location(
-                id = 'location',
-                name = 'Location',
-                desc = 'Location to search for bird sightings.',
-                icon = 'locationDot',
+                id = "location",
+                name = "Location",
+                desc = "Location to search for bird sightings.",
+                icon = "locationDot",
             ),
             schema.Dropdown(
-                id = 'distance',
-                name = 'Distance',
-                desc = 'Search radius from location (km)',
-                icon = 'feather',
+                id = "distance",
+                name = "Distance",
+                desc = "Search radius from location (km)",
+                icon = "feather",
                 default = DEFAULT_DISTANCE,
-                options = options_distance
+                options = options_distance,
             ),
             schema.Dropdown(
-                id = 'back',
-                name = 'Back',
-                desc = 'Number of days back to fetch bird sightings.',
-                icon = 'calendarDays',
+                id = "back",
+                name = "Back",
+                desc = "Number of days back to fetch bird sightings.",
+                icon = "calendarDays",
                 default = DEFAULT_BACK,
-                options = options_back
+                options = options_back,
             ),
             schema.Toggle(
-                id = 'provisional',
-                name = 'Provisional',
-                desc = 'Include sightings not yet reviewed.',
-                icon = 'clipboardCheck',
-                default = DEFAULT_PROVISIONAL
-            )
+                id = "provisional",
+                name = "Provisional",
+                desc = "Include sightings not yet reviewed.",
+                icon = "clipboardCheck",
+                default = DEFAULT_PROVISIONAL,
+            ),
         ],
     )
 
@@ -316,27 +316,27 @@ def get_scroll_text(sighting):
     """
 
     days = {
-        0: 'Sun',
-        1: 'Mon',
-        2: 'Tues',
-        3: 'Wed',
-        4: 'Thur',
-        5: 'Fri',
-        6: 'Sat'
+        0: "Sun",
+        1: "Mon",
+        2: "Tues",
+        3: "Wed",
+        4: "Thur",
+        5: "Fri",
+        6: "Sat",
     }
 
-    sighting_date = sighting.get('date')
+    sighting_date = sighting.get("date")
 
     if sighting_date:
         day_of_week = humanize.day_of_week(sighting_date)
-        # local timezone should = bird sighting timezone since both are derived from location config
-        sighting_day = 'Today' if day_of_week == humanize.day_of_week(time.now()) else days[day_of_week]
-        scroll_text = sighting_day + ': ' + sighting.get('loc')
-    else:
-        scroll_text = sighting.get('loc')
-    
-    return scroll_text
 
+        # local timezone should = bird sighting timezone since both are derived from location config
+        sighting_day = "Today" if day_of_week == humanize.day_of_week(time.now()) else days[day_of_week]
+        scroll_text = sighting_day + ": " + sighting.get("loc")
+    else:
+        scroll_text = sighting.get("loc")
+
+    return scroll_text
 
 def format_bird_name(bird):
     """Format bird name for display.
@@ -351,43 +351,40 @@ def format_bird_name(bird):
 
     # Hard code hyphens into bird names that exceed a single
     # line on the Tidbyt display. This is an incomplete list.
-    print('bird name: ', bird)  # buildifier: disable=print
-    bird = bird.replace('Apostlebird', 'Apostle-bird')
-    bird = bird.replace('Australasian', 'Austra-lasian')
-    bird = bird.replace('Australian', 'Austra-lian')
-    bird = bird.replace('Blackburnian', 'Black-burnian')
-    bird = bird.replace('Butcherbird', 'Butcher-bird')
-    bird = bird.replace('Currawong', 'Curra-wong')
-    bird = bird.replace('Honeyeater', 'Honey-eater')
-    bird = bird.replace('Hummingbird', 'Humming-bird')
-    bird = bird.replace('Mockingbird', 'Mocking-bird')
-    bird = bird.replace('Yellowthroat', 'Yellow-throat')
-    bird = bird.replace('catcher', '-catcher')
-    bird = bird.replace('pecker', '-pecker')
-    bird = bird.replace('thrush', '-thrush')
+    print("bird name: ", bird)  # buildifier: disable=print
+    bird = bird.replace("Apostlebird", "Apostle-bird")
+    bird = bird.replace("Australasian", "Austra-lasian")
+    bird = bird.replace("Australian", "Austra-lian")
+    bird = bird.replace("Blackburnian", "Black-burnian")
+    bird = bird.replace("Butcherbird", "Butcher-bird")
+    bird = bird.replace("Currawong", "Curra-wong")
+    bird = bird.replace("Honeyeater", "Honey-eater")
+    bird = bird.replace("Hummingbird", "Humming-bird")
+    bird = bird.replace("Mockingbird", "Mocking-bird")
+    bird = bird.replace("Yellowthroat", "Yellow-throat")
+    bird = bird.replace("catcher", "-catcher")
+    bird = bird.replace("pecker", "-pecker")
+    bird = bird.replace("thrush", "-thrush")
 
     # Wrapped text widget doesn't break on a hyphen, so force a newline
     # if a hyphenated bird name will exceed 9 characters
     bird_parts = bird.split()
     split_bird = [
-        b.replace('-', '-\n', 1)
-        if len(b) > 9
-        else b
+        b.replace("-", "-\n", 1) if len(b) > 9 else b
         for b in bird_parts
     ]
-    bird = ' '.join(split_bird)
+    bird = " ".join(split_bird)
 
     # Setting an explicit bird name font here lays groundwork for a future
     # enhancement that can return a smaller font when bird names are long
     # (9 letters is max size of a word that displays w/o cutting off)
-    font = 'tb-8'
+    font = "tb-8"
 
     return bird, font
 
-
 #------------------------------------------------------------------------
 # Assets
-# (until Tidbyt/pixlet has the concept of a separate assets folder, 
+# (until Tidbyt/pixlet has the concept of a separate assets folder,
 # images and gifs are stored in the .star file as encoded binary data)
 #------------------------------------------------------------------------
 PURPLE_BIRD_IDLE = base64.decode("""
