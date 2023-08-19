@@ -1,3 +1,6 @@
+**This repo is not maintained.**   
+**Birdbyt is live, and the code has moved to [Tidbyt's community repo](https://github.com/tidbyt/community/tree/main/apps/birdbyt).**
+
 # Birdbyt
 
 [Tidbyt](https://tidbyt.com/) app that displays recent bird sightings.
